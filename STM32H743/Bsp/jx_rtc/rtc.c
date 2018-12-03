@@ -25,7 +25,7 @@ void JX_RTC_Init(void)
 	HAL_PWR_EnableBkUpAccess();
 	if(HAL_RTCEx_BKUPRead(&hrtc,RTC_BKP_DR0)!=0X5051)
 	{ 
-		JX_RTC_SetTime(2018, 11, 28, 16, 22, 0);
+		JX_RTC_SetTime(2018, 11, 28, 3, 16, 22, 0);
 		HAL_RTCEx_BKUPWrite(&hrtc,RTC_BKP_DR0,0X5051);
 	}
 	HAL_PWR_DisableBkUpAccess();
@@ -36,7 +36,7 @@ void JX_RTC_DeInit(void)
 	 __HAL_RCC_RTC_DISABLE();
 }
 
-void JX_RTC_GetTime(uint32_t *year, uint8_t *month, uint8_t *day, uint8_t *hour, uint8_t *min, uint8_t *sec)
+void JX_RTC_GetTime(uint32_t *year, uint8_t *month, uint8_t *day, uint8_t *week, uint8_t *hour, uint8_t *min, uint8_t *sec)
 {
 	RTC_DateTypeDef RTC_Date;
 	RTC_TimeTypeDef RTC_Time;
@@ -52,19 +52,20 @@ void JX_RTC_GetTime(uint32_t *year, uint8_t *month, uint8_t *day, uint8_t *hour,
 	*year = RTC_Date.Year + 2000;
 	*month = RTC_Date.Month;
 	*day = RTC_Date.Date;
+	*week = RTC_Date.WeekDay;
 	*hour = RTC_Time.Hours;
 	*min = RTC_Time.Minutes;
 	*sec = RTC_Time.Seconds;
 }
 
-void JX_RTC_SetTime(uint32_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec)
+void JX_RTC_SetTime(uint32_t year, uint8_t month, uint8_t day, uint8_t week, uint8_t hour, uint8_t min, uint8_t sec)
 {
 	RTC_DateTypeDef RTC_DateStructure;
 	RTC_TimeTypeDef RTC_TimeStructure;
 	
 	RTC_DateStructure.Date=day;
 	RTC_DateStructure.Month=month;
-	RTC_DateStructure.WeekDay=RTC_WEEKDAY_MONDAY;
+	RTC_DateStructure.WeekDay=week;
 	RTC_DateStructure.Year=year-2000;
 	
 	RTC_TimeStructure.Hours=hour;
