@@ -190,7 +190,7 @@ static void JX_Flash_WriteData(uint32_t FlashAddress, uint64_t DataAddress)
 	
 }
 
-static void JX_Flash_ReadData(uint32_t ReadAddr, uint32_t *pBuffer, uint32_t NumToRead)
+ void JX_Flash_ReadData(uint32_t ReadAddr, uint32_t *pBuffer, uint32_t NumToRead)
 {
 	uint32_t i;
 	
@@ -209,7 +209,7 @@ static void JX_Flash_UpdateTable(uint32_t uuid)
 	
 	SampleNumber = JX_Flash_GetSampleNumber();
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, SampleNumber);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 42);
 	Sample_Table_Buffer[SampleNumber] = uuid;
 	Sample_Table_Buffer[40] += 1;
 	crc = JX_Flash_CRC8((uint8_t *)Sample_Table_Buffer, 41 * 4);

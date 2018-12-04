@@ -9,11 +9,12 @@
 #include "rtc.h"
 #include "dxi2c_stm32.h"
 #include "audio.h"
+#include "flash.h"
 
 int main(void)
 {	
-  volatile uint32_t dx8_authen_state;
-	
+	volatile uint32_t i;
+  		
   HAL_Init();
   SystemClock_Config();
 	delay_init(400);
@@ -24,15 +25,15 @@ int main(void)
 	JX_UH0002_Init();
 	JX_DX8_Init();
 	JX_Audio_Init();
-	dx8_authen_state = JX_DX8_Authen();
 	
-	JX_Audio_Play(2);	
-//	JX_Audio_ConversionFileToHex(3);
+	
+
   while (1)
-  {
-	 	JX_LED_Toggle;
+	{
+		JX_LED_Toggle;
 		delay_ms(3000);
-  }
+	}
+
 }
 
 void _Error_Handler(char *file, int line)
