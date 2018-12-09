@@ -460,6 +460,11 @@
               <FileType>1</FileType>
               <FilePath>..\Bsp\jx_audio\audio.c</FilePath>
             </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Bsp\jx_flash\flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

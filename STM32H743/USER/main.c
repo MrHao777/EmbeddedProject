@@ -26,8 +26,6 @@ int main(void)
 	JX_DX8_Init();
 	JX_Audio_Init();
 	
-	
-
   while (1)
 	{
 		JX_LED_Toggle;
