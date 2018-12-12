@@ -409,6 +409,13 @@
         </Group>
         <Group>
           <GroupName>App</GroupName>
+          <Files>
+            <File>
+              <FileName>CommandStateMachine.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\CommandStateMachine.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>System</GroupName>

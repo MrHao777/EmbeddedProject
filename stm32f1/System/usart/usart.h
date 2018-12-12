@@ -3,7 +3,7 @@
 #include "sys.h"
 #include "stdio.h"	
 
-#define USART_REC_LEN     15                            //定义最大接收字节数 15
+#define USART_REC_LEN     10                            //定义最大接收字节数 15
 #define EN_USART1_RX 			1		                          //使能（1）/禁止（0）串口1接收
 extern UART_HandleTypeDef huart1;                       //UART句柄	  	
 extern uint16_t           USART_RX_STA;         		    //接收状态标记	

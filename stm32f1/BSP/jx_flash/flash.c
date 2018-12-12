@@ -19,13 +19,13 @@ uint32_t JX_GetAlertMode(void)
 	return Flash_Buffer[2];
 }
 
-int32_t JX_CheckAdmPassword(int8_t* password_pointer)
+int32_t JX_CheckAdmPassword(uint8_t* password_pointer)
 {
 	uint8_t compare_state;
 	
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 5);
-	compare_state = strncmp ( (char*)password_pointer,(char*)Flash_Buffer + 12, 8 );
+	compare_state = strncmp ( (char*)password_pointer,(char*)Flash_Buffer + 12, 6 );
 	
 	if(compare_state)
 		return -1;
@@ -33,13 +33,13 @@ int32_t JX_CheckAdmPassword(int8_t* password_pointer)
 		return 0;
 }
 
-int32_t JX_CheckUserPassword(int8_t* password_pointer)
+int32_t JX_CheckUserPassword(uint8_t* password_pointer)
 {
 	uint8_t compare_state;
 	
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
-	compare_state = strncmp ( (char*)password_pointer,(char*)Flash_Buffer + 20, 8 );
+	compare_state = strncmp ( (char*)password_pointer,(char*)Flash_Buffer + 20, 6 );
 	
 	if(compare_state)
 		return -1;
@@ -99,24 +99,24 @@ void JX_SetAlertMode(int32_t mode)
 	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
 }
 
-void JX_SetAdmPassword(int8_t* password_pointer)
+void JX_SetAdmPassword(uint8_t* password_pointer)
 {
 	uint8_t i;
 	
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
-	for(i=0; i<8; i++)
+	for(i=0; i<6; i++)
 		*((int8_t *)Flash_Buffer + 12 + i) = *(password_pointer + i);
 	JX_Flash_EraseFlash(61);
 	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
 }
-void JX_SetUserPassword(int8_t* password_pointer)
+void JX_SetUserPassword(uint8_t* password_pointer)
 {
 	uint8_t i;
 	
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
-	for(i=0; i<8; i++)
+	for(i=0; i<6; i++)
 		*((int8_t *)Flash_Buffer + 20 + i) = *(password_pointer + i);
 	JX_Flash_EraseFlash(61);
 	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);

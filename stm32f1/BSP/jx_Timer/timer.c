@@ -50,21 +50,21 @@ void JX_TimerDeInt(void)
 //0-255 0代表1s
 void JX_TimerSetAlarmTime(uint8_t time)
 {
-	htim1.Init.RepetitionCounter = time;
-  if (	HAL_TIM_Base_Init(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-	TIM1->EGR = 1;
-	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
-  if (	HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-  if (	HAL_TIM_Base_Start(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+//	htim1.Init.RepetitionCounter = time;
+//  if (	HAL_TIM_Base_Init(&htim1) != HAL_OK)
+//  {
+//    _Error_Handler(__FILE__, __LINE__);
+//  }
+//	TIM1->EGR = 1;
+//	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
+//  if (	HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
+//  {
+//    _Error_Handler(__FILE__, __LINE__);
+//  }
+//  if (	HAL_TIM_Base_Start(&htim1) != HAL_OK)
+//  {
+//    _Error_Handler(__FILE__, __LINE__);
+//  }
 }
 
 void JX_TimerStop(void)

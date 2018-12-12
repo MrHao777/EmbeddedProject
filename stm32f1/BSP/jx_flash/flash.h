@@ -27,19 +27,21 @@ uuid         : 40*4字节
 #define ADDR_FLASH_PAGE_126		((uint32_t)0x0801F800)	/* Base @ of Page 126, 1 Kbytes */
 #define ADDR_FLASH_PAGE_127		((uint32_t)0x0801FC00)	/* Base @ of Page 127, 1 Kbytes */
 
+//获取验证模式状态
 uint32_t JX_GetOpenDoorMode(void); 
+//获取警戒模式状态
 uint32_t JX_GetAlertMode(void);
 //匹配返回0 否则返回-1
-int32_t JX_CheckAdmPassword(int8_t* password_pointer);
+int32_t JX_CheckAdmPassword(uint8_t* password_pointer);
 //匹配返回0 否则返回-1
-int32_t JX_CheckUserPassword(int8_t* password_pointer);
+int32_t JX_CheckUserPassword(uint8_t* password_pointer);
 //匹配返回0 否则返回-1
 int32_t JX_CheckUUID(uint32_t uuid); 
 void JX_DeletUUID(void); 
 void JX_SetOpenDoorMode(int32_t mode);
 void JX_SetAlertMode(int32_t mode);
-void JX_SetAdmPassword(int8_t* password_pointer); 
-void JX_SetUserPassword(int8_t* password_pointer); 
+void JX_SetAdmPassword(uint8_t* password_pointer); 
+void JX_SetUserPassword(uint8_t* password_pointer); 
 void JX_SaveUUID(uint32_t uuid); 
 
 //内部接口

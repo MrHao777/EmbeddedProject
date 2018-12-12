@@ -9,7 +9,7 @@
 #include "microswitch.h"
 #include "electromagnet.h"
 #include "timer.h"
-//#include "CommandStateMachine.h"
+#include "CommandStateMachine.h"
 
 /**********Òý½Å¶¨Òå*********
 ADC         : 		B1  ok
@@ -25,6 +25,9 @@ ADC         : 		B1  ok
 
 int main(void)
 {
+	uint8_t buf[7]={0x13, 0x65, 0, 0, 6, 0, 0};
+	uint8_t password[8]={0x16, 0x12, 0x34, 0x56, 0x78, 0, 0, 0}; 
+	uint8_t string[] = {1, 2, 3, 4, 5, 6};
   HAL_Init();
 	Stm32_Clock_Init();
 	delay_init(64);
@@ -36,7 +39,14 @@ int main(void)
 	JX_DoorState_Init();
 	JX_TimerInit();
 	JX_OpenDoor_Init();
-//	JX_CommandStateMachine();
+//	JX_DeletUUID();
+//	JX_SetAdmPassword(string); 
+//	JX_SetUserPassword(string); 
+//	JX_SetOpenDoorMode(0);
+//	JX_SetAlertMode(0);
+//	JX_SaveUUID(0x12345678);
+	password[5] = JX_Usart_CRC8(password+1, 4);
+	JX_CommandStateMachine();
 	while(1);
 }
 
