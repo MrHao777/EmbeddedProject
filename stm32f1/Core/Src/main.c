@@ -5,6 +5,7 @@
 #include "adc.h"
 #include "key.h"
 #include "ShockSensor.h"
+#include "power.h"
 #include "flash.h"
 #include "microswitch.h"
 #include "electromagnet.h"
@@ -39,15 +40,19 @@ int main(void)
 	JX_DoorState_Init();
 	JX_TimerInit();
 	JX_OpenDoor_Init();
+	JX_PowerCtrlInit();
+	
 //	JX_DeletUUID();
 //	JX_SetAdmPassword(string); 
 //	JX_SetUserPassword(string); 
 //	JX_SetOpenDoorMode(0);
 //	JX_SetAlertMode(0);
 //	JX_SaveUUID(0x12345678);
-	password[5] = JX_Usart_CRC8(password+1, 4);
 	JX_CommandStateMachine();
-	while(1);
+	while(1)
+	{
+		delay_ms(100);
+	}
 }
 
 void _Error_Handler(char *file, int line)

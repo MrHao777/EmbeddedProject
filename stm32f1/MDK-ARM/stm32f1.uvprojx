@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\System\sys;..\System\delay;..\System\usart;..\BSP\jx_Adc;..\BSP\jx_Electromagnet;..\BSP\jx_flash;..\BSP\jx_key;..\BSP\jx_MicroSwitch;..\BSP\jx_ShockSensor;..\BSP\jx_Timer;..\APP</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\System\sys;..\System\delay;..\System\usart;..\BSP\jx_Adc;..\BSP\jx_Electromagnet;..\BSP\jx_flash;..\BSP\jx_key;..\BSP\jx_MicroSwitch;..\BSP\jx_ShockSensor;..\BSP\jx_Timer;..\BSP\jx_Power;..\APP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -474,6 +474,11 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\jx_Timer\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>power.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\jx_Power\power.c</FilePath>
             </File>
           </Files>
         </Group>

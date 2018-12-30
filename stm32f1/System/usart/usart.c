@@ -83,14 +83,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		
 		// 数据请求引脚初始化
 		__HAL_RCC_GPIOD_CLK_ENABLE();
-		GPIO_InitStruct.Pin = GPIO_PIN_0;
+		GPIO_InitStruct.Pin = GPIO_PIN_8;
 		GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 		GPIO_InitStruct.Pull = GPIO_PULLUP;
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-		HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-    __HAL_AFIO_REMAP_PD01_ENABLE();
-		HAL_NVIC_SetPriority(EXTI0_IRQn, 2, 2);
-		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		HAL_NVIC_SetPriority(EXTI9_5_IRQn, 2, 2);
+		HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
   }
 }
 
@@ -120,9 +119,9 @@ void USART1_IRQHandler(void)
 #endif
 } 
 
-void EXTI0_IRQHandler(void)
+void EXTI9_5_IRQHandler(void)
 {
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
 	UartRequestState = 1;
 }
 #endif	
