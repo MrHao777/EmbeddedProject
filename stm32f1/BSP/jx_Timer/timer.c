@@ -37,7 +37,7 @@ void JX_TimerInit(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 	
-	HAL_NVIC_SetPriority(TIM1_UP_IRQn, 3, 3);
+	HAL_NVIC_SetPriority(TIM1_UP_IRQn, 3, 2);
   HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
 }
 
@@ -50,21 +50,21 @@ void JX_TimerDeInt(void)
 //0-255 0代表1s
 void JX_TimerSetAlarmTime(uint8_t time)
 {
-//	htim1.Init.RepetitionCounter = time;
-//  if (	HAL_TIM_Base_Init(&htim1) != HAL_OK)
-//  {
-//    _Error_Handler(__FILE__, __LINE__);
-//  }
-//	TIM1->EGR = 1;
-//	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
-//  if (	HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
-//  {
-//    _Error_Handler(__FILE__, __LINE__);
-//  }
-//  if (	HAL_TIM_Base_Start(&htim1) != HAL_OK)
-//  {
-//    _Error_Handler(__FILE__, __LINE__);
-//  }
+	htim1.Init.RepetitionCounter = time;
+  if (	HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+	TIM1->EGR = 1;
+	__HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
+  if (	HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+  if (	HAL_TIM_Base_Start(&htim1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
 }
 
 void JX_TimerStop(void)
@@ -79,20 +79,10 @@ void JX_TimerStop(void)
   }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  if (	HAL_TIM_Base_Stop_IT(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-  if (	HAL_TIM_Base_Stop(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-	timer_alarm_state = 1;
-}
-
 void TIM1_UP_IRQHandler(void)
 {
 	HAL_TIM_IRQHandler(&htim1);
+	HAL_TIM_Base_Stop_IT(&htim1);
+	HAL_TIM_Base_Stop(&htim1);
+	timer_alarm_state = 1;
 }

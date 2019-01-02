@@ -10,6 +10,4 @@ void JX_Shock_DeInit(void);
 void JX_Shock_StartSensing(void);
 void JX_Shock_StopSensing(void);
 
-void EXTI4_IRQHandler(void);
-
 #endif

@@ -7,6 +7,7 @@
 #include "flash.h"
 #include "microswitch.h"
 #include "electromagnet.h"
+#include "power.h"
 #include "timer.h"
 #include "string.h"
 
@@ -16,6 +17,7 @@ uint8_t     key_reset_state = 0;             //复位键标记
 uint8_t     key_set_state = 0;               //设置键标记
 uint8_t     key_wakeup_state = 0;            //唤醒键标记
 uint8_t     shock_sensor_state;              //震动传感器标记
+uint8_t	    door_open_timeout_state;         //开门超时标记
 uint8_t     timer_alarm_state = 0;           //定时器标记
 uint16_t    USART_RX_STA=0;                  //接收状态标记
 uint8_t     USART_RX_BUF[15];                //接收缓冲
@@ -41,37 +43,38 @@ void JX_CommandStateMachine(void)
 			case state_Nop :           /*空指令 处理各种标记*/
 				if(UartRequestState)   //从机数据请求
 				{
-					delay_ms(50);
 					UartRequestState = 0;
 					state = state_ReceivePermit;
 					break;
 				}
 				if(key_reset_state)    //复位键请求
 				{
-					delay_ms(100);
 					key_reset_state = 0;
-					state = state_ReceivePermit;//state_RequestRst
+					state = state_RequestRst;
 					break;
 				}
 				if(key_set_state)      //设置键请求
 				{
-					delay_ms(100);
 					key_set_state = 0;
-					state = state_WeekUpH7;//   state_WeekUpH7
+					state = state_SetMode;  
 					break;
 				}
 				if(key_wakeup_state)   //唤醒键请求
 				{
-					delay_ms(100);
 					key_wakeup_state = 0;
 					state = state_WeekUpH7;
 					break;
 				}
 				if(shock_sensor_state) //震动传感器
 				{
-					delay_ms(100);
 					shock_sensor_state = 0;
 					state = state_SendAlarmSig;
+					break;
+				}
+				if(door_open_timeout_state) //开么超时
+				{
+					door_open_timeout_state = 0;
+					state = state_SendOpenTime;
 					break;
 				}
 				break;
@@ -151,6 +154,8 @@ void JX_CommandStateMachine(void)
 				key_set_state = 0;
 				break;
 			case state_WeekUpH7:       /*唤醒请求*/
+				JX_PowerON();
+			  delay_ms(100);
 				temp1 = 0;
 				if(JX_GetAlertMode())
 					temp1 |= 0x02;
@@ -160,7 +165,7 @@ void JX_CommandStateMachine(void)
 			    temp1 |= 0x01;
 				else
 					temp1 &= 0xfe;
-//				temp2 = JX_ADC_GetPower();
+				temp2 = JX_ADC_GetPower();
 				temp2 = 20;
 				JX_UartSendCmdFrame(state_WeekUpH7, temp1, temp2, 0, 0);
 			  RecvState = JX_UartRecvCmdFrame();
@@ -231,6 +236,8 @@ void JX_CommandStateMachine(void)
 				}
 				break;
       case state_SendOpenTime :  /*发送开门时间*/
+				
+			  state = state_Nop;
 				break;
       case state_JudgeUUID :     /*请求判断uuid*/
 			  RecvState = JX_UartRecvDataFrame();
@@ -277,7 +284,7 @@ void JX_CommandStateMachine(void)
 					for(i=0; i<temp1; i++)
 						temppassword[i] = USART_RX_BUF[i+1];
 					for(; i<6; i++)
-						temppassword[i] = 0;
+						temppassword[i] = 'x';
 					temp2 = JX_CheckUserPassword(temppassword);
 					if(temp2)
 						temp2 = 1;
@@ -309,7 +316,7 @@ void JX_CommandStateMachine(void)
 					for(i=0; i<temp1; i++)
 						temppassword[i] = USART_RX_BUF[i+1];
 					for(; i<6; i++)
-						temppassword[i] = 0;
+						temppassword[i] = 'x';
 					temp2 = JX_CheckAdmPassword(temppassword);
 					if(temp2)
 						temp2 = 1;
@@ -341,7 +348,7 @@ void JX_CommandStateMachine(void)
 					for(i=0; i<temp1; i++)
 						temppassword[i] = USART_RX_BUF[i+1];
 					for(; i<6; i++)
-						temppassword[i] = 0;
+						temppassword[i] = 'x';
 					JX_SetAdmPassword(temppassword); 
 					JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 				} else if(RecvState == -1)
@@ -371,7 +378,7 @@ void JX_CommandStateMachine(void)
 					for(i=0; i<temp1; i++)
 						temppassword[i] = USART_RX_BUF[i+1];
 					for(; i<6; i++)
-						temppassword[i] = 0;
+						temppassword[i] = 'x';
 					JX_SetUserPassword(temppassword); 
 					JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 				} else if(RecvState == -1)
@@ -590,6 +597,7 @@ void JX_CommandStateMachine(void)
 			  RecvState = JX_UartRecvCmdFrame();
 			  if(RecvState == 0)
 				{
+					JX_PowerOFF();
 					state = state_Nop;
 				}
 				else if(RecvState == -1)
@@ -647,6 +655,7 @@ void JX_UartSendCmdFrame(uint8_t cmd, uint8_t data1, uint8_t data2, uint8_t leng
 int8_t JX_UartRecvCmdFrame(void)
 {
 	timer_alarm_state = 0;
+	JX_Timer4ClearCount();
 	JX_TimerSetAlarmTime(2);
 	while((USART_RX_STA & 0x8000) == 0)
 	{
@@ -666,6 +675,7 @@ int8_t JX_UartRecvDataFrame(void)
 {
 	uint8_t crc;
 	timer_alarm_state = 0;
+	JX_Timer4ClearCount();
 	while((USART_RX_STA & 0x8000) == 0)
 	{
 		if(timer_alarm_state)

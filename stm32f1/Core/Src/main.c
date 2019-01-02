@@ -12,46 +12,53 @@
 #include "timer.h"
 #include "CommandStateMachine.h"
 
-/**********引脚定义*********
-ADC         : 		B1  ok
-数据请求引脚:			D0  2
-唤醒键      :         无
-复位键      : 		A1  ok
-设置键      :			A2  ok
-微动开关    : 		A3  ok
-震动传感器  :			A4  relay
-电磁铁      :			    无
+/*****定时器使用情况******************
+time1  : 串口通信超时检测
+time2  : 按键中断轮询 20ms
+time3  : 开门状态计时
+time4  : F1开机计时
+*************************************/
 
-***************************/
+/*****中断优先级列表******************
+中断优先级分组 :NVIC_PRIORITYGROUP_2
+--------------------------------------
+中断名称            preemption     sub
+MemoryManagement_IRQn        0       0
+BusFault_IRQn                0       0
+UsageFault_IRQn              0       0
+SVCall_IRQn                  0       0
+DebugMonitor_IRQn            0       0
+PendSV_IRQn                  0       0
+SysTick_IRQn                 0       0
+USART1_IRQn                  1       1
+EXTI9_5_IRQn                 2       2
+TIM2_IRQn                    3       3
+EXTI3_IRQn                   3       3
+TIM3_IRQn                    3       3
+EXTI4_IRQn                   3       3
+TIM1_UP_IRQn                 3       2
+TIM4_IRQn                    3       3
+*************************************/
 
 int main(void)
 {
-	uint8_t buf[7]={0x13, 0x65, 0, 0, 6, 0, 0};
-	uint8_t password[8]={0x16, 0x12, 0x34, 0x56, 0x78, 0, 0, 0}; 
-	uint8_t string[] = {1, 2, 3, 4, 5, 6};
   HAL_Init();
 	Stm32_Clock_Init();
 	delay_init(64);
 	uart_init(115200);
 	
-	JX_ADC_Init();
 	JX_KeyInit();
-	JX_Shock_Init();
+  JX_Shock_Init();
+	JX_ADC_Init();
 	JX_DoorState_Init();
 	JX_TimerInit();
 	JX_OpenDoor_Init();
+	JX_FlashInit();
 	JX_PowerCtrlInit();
-	
-//	JX_DeletUUID();
-//	JX_SetAdmPassword(string); 
-//	JX_SetUserPassword(string); 
-//	JX_SetOpenDoorMode(0);
-//	JX_SetAlertMode(0);
-//	JX_SaveUUID(0x12345678);
 	JX_CommandStateMachine();
 	while(1)
 	{
-		delay_ms(100);
+		
 	}
 }
 

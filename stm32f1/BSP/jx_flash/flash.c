@@ -3,6 +3,26 @@
 
 static uint32_t Flash_Buffer[40];
 
+void JX_FlashInit(void)
+{
+	JX_Flash_clrSampleTableBuf();
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
+  if(Flash_Buffer[7] != FLASH_DATA_VALIED_FLAG)
+	{
+		JX_DeletUUID();
+		JX_SetAdmPassword((uint8_t*)"123456"); 
+		JX_SetUserPassword((uint8_t*)"1234xx"); 
+    JX_SetOpenDoorMode(0);
+    JX_SetAlertMode(0);
+		JX_Flash_clrSampleTableBuf();
+	  JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
+		Flash_Buffer[7] = FLASH_DATA_VALIED_FLAG;
+		JX_Flash_EraseFlash(61);
+		JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);	
+//    printf("flash erased\n\r");
+	}
+}
+
 uint32_t JX_GetOpenDoorMode(void)
 {
 	JX_Flash_clrSampleTableBuf();
@@ -55,6 +75,9 @@ int32_t JX_CheckUUID(uint32_t uuid)
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 1);
 	uuid_num = Flash_Buffer[0];
+	if(uuid_num == 0)
+		return 0;
+	
 	JX_Flash_clrSampleTableBuf();
 	JX_Flash_ReadData(FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_F1, Flash_Buffer, uuid_num);
 	for(i=0; i<uuid_num; i++)
@@ -75,28 +98,28 @@ void JX_DeletUUID(void)
 	
 	//更新num
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	Flash_Buffer[0] = 0;
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);	
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);	
 }
 
 void JX_SetOpenDoorMode(int32_t mode)
 {
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	Flash_Buffer[1] = mode;
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 }
 
 void JX_SetAlertMode(int32_t mode)
 {
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	Flash_Buffer[2] = mode;
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 }
 
 void JX_SetAdmPassword(uint8_t* password_pointer)
@@ -104,22 +127,22 @@ void JX_SetAdmPassword(uint8_t* password_pointer)
 	uint8_t i;
 	
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	for(i=0; i<6; i++)
 		*((int8_t *)Flash_Buffer + 12 + i) = *(password_pointer + i);
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 }
 void JX_SetUserPassword(uint8_t* password_pointer)
 {
 	uint8_t i;
 	
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	for(i=0; i<6; i++)
 		*((int8_t *)Flash_Buffer + 20 + i) = *(password_pointer + i);
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 }
 
 void JX_SaveUUID(uint32_t uuid)
@@ -128,7 +151,7 @@ void JX_SaveUUID(uint32_t uuid)
 	
 	
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	uuid_num = Flash_Buffer[0];
 	//更新uuid
 	JX_Flash_clrSampleTableBuf();
@@ -139,10 +162,10 @@ void JX_SaveUUID(uint32_t uuid)
 	
 	//更新num
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 	Flash_Buffer[0]++;
 	JX_Flash_EraseFlash(61);
-	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 7);
+	JX_Flash_WriteData(FLASH_USER_START_ADDR, Flash_Buffer, 8);
 }
 
 /************************************************/

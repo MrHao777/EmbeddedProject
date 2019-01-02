@@ -1,20 +1,22 @@
 #include "ShockSensor.h"
 #include "delay.h"
+#include "key.h"
 
 uint8_t shock_sensor_state = 0;
 
 void JX_Shock_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
-	GPIO_InitStruct.Pin = GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-  HAL_NVIC_SetPriority(EXTI3_IRQn, 3, 3);
-  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+	uint8_t i;
+	for(i=0; i<20; i++)
+	{
+		delay_ms(100);
+		if(key_Pressed)
+		{
+			JX_Shock_StopSensing();
+			return ;
+		}
+	}
+	JX_Shock_StartSensing();
 }
 
 void JX_Shock_DeInit(void)
@@ -25,18 +27,11 @@ void JX_Shock_DeInit(void)
 
 void JX_Shock_StartSensing(void)
 {
-	
+	shock_sensor_state = 1;
 }
 
 void JX_Shock_StopSensing(void)
 {
-	
-}
-
-void EXTI3_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
-	delay_ms(50);
-	shock_sensor_state = 1;
+	shock_sensor_state = 0;
 }
 

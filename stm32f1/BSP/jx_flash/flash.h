@@ -9,11 +9,12 @@ Verifmode    : 4字节
 alertmode    : 4字节
 AdmPassword  : 8字节
 UserPassword : 8字节
+数据有效标记 : 4字节
 
 uuid数据     : ADDR_FLASH_PAGE_62 0x0800F800
 uuid         : 40*4字节
 *********************************************/
-
+#define FLASH_DATA_VALIED_FLAG  0x56781234                  /* 数据有效标志 */
 #define FLASH_USER_START_ADDR   ADDR_FLASH_PAGE_61    			/* 用户数据首地址 */
 #define FLASH_SECTOR_SIZE_F1		0x400 											/* 每个page容量(字节) */
 #define FLASH_WAITETIME  				100000          						/* FLASH等待超时时间 */
@@ -27,6 +28,7 @@ uuid         : 40*4字节
 #define ADDR_FLASH_PAGE_126		((uint32_t)0x0801F800)	/* Base @ of Page 126, 1 Kbytes */
 #define ADDR_FLASH_PAGE_127		((uint32_t)0x0801FC00)	/* Base @ of Page 127, 1 Kbytes */
 
+void JX_FlashInit(void);
 //获取验证模式状态
 uint32_t JX_GetOpenDoorMode(void); 
 //获取警戒模式状态
