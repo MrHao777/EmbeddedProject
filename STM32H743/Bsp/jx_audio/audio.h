@@ -3,6 +3,8 @@
 
 #include "stm32h7xx_hal.h"
 
+#define audio_number 23
+
 typedef struct 
 {
 	uint32_t	size;
@@ -44,9 +46,25 @@ typedef struct
 typedef struct
 {
 	uint16_t sampling_rate;
-	uint32_t data_length;
+	uint64_t data_length;
 	uint16_t *data_pointer;
 } DAC_DATA_INFO;
+
+typedef struct
+{
+	uint32_t  data_number[audio_number];
+	uint32_t  data_addr[audio_number];
+} AUDIO_LIST;
+
+typedef struct
+{	
+	uint32_t data_addr;        //文件地址
+	uint32_t data_size;				 //扇区大小
+	uint32_t temp_addr;        //当前扇区
+	uint32_t Buf1[4096];       //缓冲区1
+	uint32_t Buf2[4096];			 //缓冲区2
+	uint8_t  buf_flag;         //缓冲区标志 0:buf1  1:buf2
+} AUDIO_PLAY;
 
 /*****************用户接口**********************/
 void JX_Audio_Init(void);
@@ -57,6 +75,8 @@ void JX_Audio_StopPaly(void);
 /*****************内部接口**********************/
 //将WAV文件转化为16进制数组并输出到串口
 void JX_Audio_ConversionFileToHex(int32_t idx);
+//将音频数据写入flash
+void JX_WriteDataToFlash(uint8_t number);
 //格式转换
 static uint32_t JX_Audio_FormatConversion(uint8_t *pointer, uint8_t size);
 //解析数据
