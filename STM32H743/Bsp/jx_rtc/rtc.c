@@ -3,13 +3,7 @@
 static RTC_HandleTypeDef hrtc;
 
 void JX_RTC_Init(void)
-{
-  RTC_TimeTypeDef sTime;
-  RTC_DateTypeDef sDate;
-
-	__HAL_RCC_RTC_ENABLE();
-  __HAL_RCC_RTC_CLK_ENABLE();
-	
+{	
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
   hrtc.Init.AsynchPrediv = 0x7f;
@@ -17,18 +11,34 @@ void JX_RTC_Init(void)
   hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-	HAL_PWR_EnableBkUpAccess();
 	if(HAL_RTCEx_BKUPRead(&hrtc,RTC_BKP_DR0)!=0X5051)
 	{ 
 		JX_RTC_SetTime(2018, 11, 28, 3, 16, 22, 0);
 		HAL_RTCEx_BKUPWrite(&hrtc,RTC_BKP_DR0,0X5051);
 	}
-	HAL_PWR_DisableBkUpAccess();
+}
+
+void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
+    __HAL_RCC_RTC_CLK_ENABLE();     //使能RTC时钟
+	  HAL_PWR_EnableBkUpAccess();     //取消备份区域写保护
+    
+    RCC_OscInitStruct.OscillatorType=RCC_OSCILLATORTYPE_LSE;//LSE配置
+    RCC_OscInitStruct.PLL.PLLState=RCC_PLL_NONE;
+    RCC_OscInitStruct.LSEState=RCC_LSE_ON;                  //RTC使用LSE
+    HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+    PeriphClkInitStruct.PeriphClockSelection=RCC_PERIPHCLK_RTC;//外设为RTC
+    PeriphClkInitStruct.RTCClockSelection=RCC_RTCCLKSOURCE_LSE;//RTC时钟源为LSE
+    HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+        
+    __HAL_RCC_RTC_ENABLE();//RTC时钟使能
 }
 
 void JX_RTC_DeInit(void)
@@ -74,7 +84,7 @@ void JX_RTC_SetTime(uint32_t year, uint8_t month, uint8_t day, uint8_t week, uin
 	RTC_TimeStructure.TimeFormat=RTC_HOURFORMAT12_AM;
 	RTC_TimeStructure.DayLightSaving=RTC_DAYLIGHTSAVING_NONE;
   RTC_TimeStructure.StoreOperation=RTC_STOREOPERATION_RESET;
-  HAL_PWR_EnableBkUpAccess();
+//  HAL_PWR_EnableBkUpAccess();
 	if(HAL_RTC_SetDate(&hrtc, &RTC_DateStructure, RTC_FORMAT_BIN) != HAL_OK)
 	{
 		_Error_Handler(__FILE__, __LINE__);
@@ -83,5 +93,5 @@ void JX_RTC_SetTime(uint32_t year, uint8_t month, uint8_t day, uint8_t week, uin
 	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
-	HAL_PWR_DisableBkUpAccess();
+//	HAL_PWR_DisableBkUpAccess();
 }

@@ -2,8 +2,13 @@
 #define FV_FLASH_H_LJS
 
 #include "stm32h7xx_hal.h"
-
-#define FLASH_USER_START_ADDR   ADDR_FLASH_BANK2_SECTOR_5   /* 用户数据首地址 */
+//用户存储空间分配方式
+//ADDR_FLASH_BANK2_SECTOR_4		table
+//ADDR_FLASH_BANK2_SECTOR_5		60个样本
+//ADDR_FLASH_BANK2_SECTOR_6   60个样本
+//ADDR_FLASH_BANK2_SECTOR_7		缓冲区
+#define FLASH_DATA_VALIED_FLAG  0x56781234                  /* 数据有效标志 */
+#define FLASH_USER_START_ADDR   ADDR_FLASH_BANK2_SECTOR_4   /* 用户数据首地址 */
 #define FLASH_SECTOR_SIZE_H7		0x20000											/* 每个sector容量(字节) */
 #define Sample_Size_Unit        ((uint32_t) 1024*2)					/* 每个样本所占字节数 */
 #define FLASH_WAITETIME  				50000          							/* FLASH等待超时时间 */
@@ -26,6 +31,7 @@
 #define ADDR_FLASH_BANK2_SECTOR_7		((uint32_t)0x081E0000)	/* Base @ of Bank2 Sector 7, 128 Kbytes */
 
 //用户接口
+void JX_Flash_Init(void);
 //获取样本数量
 //return 0-40
 uint32_t JX_Flash_GetSampleNumber(void);
@@ -37,7 +43,10 @@ uint32_t JX_Flash_GetSampleAddr(uint8_t user_index, uint8_t subnumber);
 void JX_Flash_SaveFingerSample(uint32_t uuid, uint32_t *data1, uint32_t *data2, uint32_t *data3);
 //删除所有样本
 void JX_Flash_DeletAllSamples(void);
-//Table: Sector 0, UUID1,UUID2,UUID3.....（sample number）（CRC8）
+//user_index(0-39)
+void JX_Flash_UpdateTable_Reco_Freq(uint8_t user_index);
+void JX_Flash_GetSampleFrequency(uint8_t * table_freq);
+void JX_Flash_UpdateData(uint8_t user_index,uint8_t subnumber,uint32_t *data);
 
 /*************************************************************************************************/
 //内部接口
@@ -55,5 +64,7 @@ static void JX_Flash_WriteData(uint32_t FlashAddress, uint64_t DataAddress);
  void JX_Flash_ReadData(uint32_t ReadAddr, uint32_t *pBuffer, uint32_t NumToRead);
 //更新table
 static void JX_Flash_UpdateTable(uint32_t uuid);
+void JX_Flash_CopyDataToBufArea(uint8_t user_index, uint8_t subnumber);
+void JX_Flash_CopyDataToDataArea(uint8_t user_index, uint8_t subnumber);
 #endif
 

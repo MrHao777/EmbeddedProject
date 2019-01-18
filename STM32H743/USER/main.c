@@ -5,33 +5,46 @@
 #include "usart.h"
 
 #include "LED.h"
-#include "uh0002.h"
-#include "rtc.h"
-#include "dxi2c_stm32.h"
+//#include "uh0002.h"
+//#include "rtc.h"
+//#include "dxi2c_stm32.h"
 #include "audio.h"
-#include "flash.h"
+//#include "flash.h"
+//#include "LcdSpi.h"
+
+
+/*
+clk E2
+cs  E4 SPI4
+miso E5
+mosi E6
+*/
 
 int main(void)
 {	
 	volatile uint32_t i;
-  		
+	
   HAL_Init();
   SystemClock_Config();
 	delay_init(400);
 	uart_init(115200);
 	
 	JX_LED_Init();
-	JX_RTC_Init();
-	JX_UH0002_Init();
-	JX_DX8_Init();
+//	JX_RTC_Init();
+//	JX_Flash_Init();	
+//	JX_LcdSpi_Init();
+//	JX_UH0002_Init();
+//	JX_DX8_Init();
 	JX_Audio_Init();
-	
+	for(i=0; i<23; i++)
+	{
+		JX_Audio_Play(i);
+		delay_ms(5000);
+	}
+	JX_LED_ON;	
   while (1)
 	{
-		JX_LED_Toggle;
-		delay_ms(3000);
 	}
-
 }
 
 void _Error_Handler(char *file, int line)

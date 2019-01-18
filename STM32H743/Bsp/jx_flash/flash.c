@@ -1,8 +1,18 @@
-#include "flash.h"
+#include "flash.h" 
 
-//table缓冲区(特征码 : 40*4Byte		样本总数 : 4Byte		CRC : 4byte) 
-static uint32_t Sample_Table_Buffer[48] ;
-
+//                        0 -39                 40                41 - 50            51              52
+//table缓冲区(特征码 : 40*4Byte		样本总数 : 4Byte		频率纪录 : 40*1Byte		CRC : 4byte  数据区有效标志) 
+static uint32_t Sample_Table_Buffer[56] ;
+//16
+void JX_Flash_Init(void)
+{
+	uint8_t i;
+	
+	JX_Flash_clrSampleTableBuf();
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 53);
+	if(Sample_Table_Buffer[52] != FLASH_DATA_VALIED_FLAG)
+		JX_Flash_DeletAllSamples();
+}
 
 uint32_t JX_Flash_GetSampleNumber(void)
 {
@@ -21,10 +31,15 @@ uint32_t JX_Flash_GetSampleAddr(uint8_t user_index,uint8_t subnumber)
 	{
 		addr = FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7;
 	}
-	else
+	else if(user_index < 40)
 	{
 		addr = FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 2;
 	}
+	else
+	{
+		addr = FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 3;
+	}
+	
 	addr += 3 * Sample_Size_Unit * user_index + Sample_Size_Unit * subnumber;
 	
 	return addr;
@@ -52,6 +67,50 @@ void JX_Flash_SaveFingerSample(uint32_t uuid, uint32_t *data1,uint32_t *data2,ui
 	JX_Flash_UpdateTable(uuid);
 }
 
+//                        0 -39                 40                41 - 50            51              52
+//table缓冲区(特征码 : 40*4Byte		样本总数 : 4Byte		频率纪录 : 40*1Byte		CRC : 4byte  数据区有效标志) 
+//16
+void JX_Flash_UpdateData(uint8_t user_index,uint8_t subnumber,uint32_t *data)
+{
+	uint32_t SampleNumber;
+	uint8_t i, j;
+	uint32_t k;
+	uint32_t source_addr, dist_addr;
+
+	SampleNumber = JX_Flash_GetSampleNumber();
+	JX_Flash_EraseFlash(FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 3, FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 3);
+  for(i=0; i< SampleNumber; i++)
+	{
+		for(j=0; j<3; j++)
+		{
+			if(i==user_index && j==subnumber)
+			{				
+				if(user_index < 20)
+					dist_addr = JX_Flash_GetSampleAddr(user_index + 40, subnumber);
+				else
+					dist_addr = JX_Flash_GetSampleAddr(user_index + 20, subnumber);
+				for(k=0; k<Sample_Size_Unit/4; k += 8)
+					JX_Flash_WriteData(dist_addr + k*4, (uint64_t)(data + k));
+			}
+			else
+			{
+				JX_Flash_CopyDataToBufArea(i, j);
+			}
+		}
+	}
+	if(user_index<20)
+		JX_Flash_EraseFlash(FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 1, FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 3);
+	else
+		JX_Flash_EraseFlash(FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 2, FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 3);
+	for(i=0; i<SampleNumber; i++)
+	{
+		for(j=0; j<3; j++)
+		{
+			JX_Flash_CopyDataToDataArea(i, j);
+		}
+	}
+}
+
 void JX_Flash_DeletAllSamples(void)
 {
 	uint8_t i;
@@ -62,15 +121,43 @@ void JX_Flash_DeletAllSamples(void)
 	JX_Flash_EraseFlash(FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 2, FLASH_USER_START_ADDR + FLASH_SECTOR_SIZE_H7 * 2);
 	//新建table
 	JX_Flash_clrSampleTableBuf();
-	for(i=0; i<48; i += 8)
+	Sample_Table_Buffer[52] = FLASH_DATA_VALIED_FLAG;
+	for(i=0; i<56; i += 8)
 		JX_Flash_WriteData(FLASH_USER_START_ADDR + i*4, (uint64_t)(Sample_Table_Buffer + i));
+}
 
+void JX_Flash_UpdateTable_Reco_Freq(uint8_t user_index)
+{
+	uint32_t crc;
+	uint8_t i;
+	
+	JX_Flash_clrSampleTableBuf();
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 52);
+	*((uint8_t*)Sample_Table_Buffer + 41 * 4 + user_index) += 1;
+	crc = JX_Flash_CRC8((uint8_t *)Sample_Table_Buffer, 51 * 4);
+	Sample_Table_Buffer[51] = crc;
+	Sample_Table_Buffer[52] = FLASH_DATA_VALIED_FLAG;
+	JX_Flash_EraseFlash(FLASH_USER_START_ADDR, FLASH_USER_START_ADDR);
+	for(i=0; i<56; i += 8)
+		JX_Flash_WriteData(FLASH_USER_START_ADDR + i*4, (uint64_t)(Sample_Table_Buffer + i));
+}
+
+void JX_Flash_GetSampleFrequency(uint8_t * table_freq)
+{
+	uint8_t i;
+	
+	JX_Flash_clrSampleTableBuf();
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 52);
+	for(i=0; i<40; i++)
+		table_freq[i] = *((uint8_t*)Sample_Table_Buffer + 41 * 4 + i);
 }
 
 /*****************************************************************/
 static void JX_Flash_clrSampleTableBuf(void) 
 {
-	for(int i = 0; i < 48; i++) 
+	uint32_t crc;
+	
+	for(int i = 0; i < 56; i++) 
 		Sample_Table_Buffer[i] = 0;
 }
 
@@ -209,12 +296,47 @@ static void JX_Flash_UpdateTable(uint32_t uuid)
 	
 	SampleNumber = JX_Flash_GetSampleNumber();
 	JX_Flash_clrSampleTableBuf();
-	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 42);
+	JX_Flash_ReadData(FLASH_USER_START_ADDR, Sample_Table_Buffer, 52);
 	Sample_Table_Buffer[SampleNumber] = uuid;
 	Sample_Table_Buffer[40] += 1;
-	crc = JX_Flash_CRC8((uint8_t *)Sample_Table_Buffer, 41 * 4);
-	Sample_Table_Buffer[41] = crc;
+	crc = JX_Flash_CRC8((uint8_t *)Sample_Table_Buffer, 51 * 4);
+	Sample_Table_Buffer[51] = crc;
+	Sample_Table_Buffer[52] = FLASH_DATA_VALIED_FLAG;
 	JX_Flash_EraseFlash(FLASH_USER_START_ADDR, FLASH_USER_START_ADDR);
-	for(i=0; i<48; i += 8)
+	for(i=0; i<56; i += 8)
 		JX_Flash_WriteData(FLASH_USER_START_ADDR + i*4, (uint64_t)(Sample_Table_Buffer + i));
+}
+
+void JX_Flash_CopyDataToBufArea(uint8_t user_index, uint8_t subnumber)
+{
+	uint8_t i;
+	uint32_t source_addr, dist_addr;
+	
+	source_addr = JX_Flash_GetSampleAddr(user_index, subnumber);
+	if(user_index < 20)
+		dist_addr = JX_Flash_GetSampleAddr(user_index + 40, subnumber);
+	else
+		dist_addr = JX_Flash_GetSampleAddr(user_index + 20, subnumber);
+	for(i=0; i<64; i++)
+	{
+		JX_Flash_ReadData(source_addr + i * 32, Sample_Table_Buffer, 8);
+		JX_Flash_WriteData(dist_addr + i * 32, (uint64_t)Sample_Table_Buffer);
+	}
+}
+
+void JX_Flash_CopyDataToDataArea(uint8_t user_index, uint8_t subnumber)
+{
+	uint8_t i;
+	uint32_t source_addr, dist_addr;
+
+	if(user_index < 20)
+		source_addr = JX_Flash_GetSampleAddr(user_index + 40, subnumber);
+	else
+		source_addr = JX_Flash_GetSampleAddr(user_index + 20, subnumber);
+	dist_addr = JX_Flash_GetSampleAddr(user_index, subnumber);
+	for(i=0; i<64; i++)
+	{
+		JX_Flash_ReadData(source_addr + i * 32, Sample_Table_Buffer, 8);
+		JX_Flash_WriteData(dist_addr + i * 32, (uint64_t)Sample_Table_Buffer);
+	}	
 }

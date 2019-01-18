@@ -1,0 +1,109 @@
+﻿通信协议（周林，郝英杰，明天） 
+12月7日连调
+
+1.	红外LED模块 (jx_irled.h / jx_irled.c) （周林，deadline，）
+void JX_IRLED_Init(void);
+void JX_IRLED_DeInit(void);
+void JX_IRLED_SetDutyFactor(uint8_t val);
+
+2.	音频模块(jx_audio.h / jx_audio.c)（郝英杰, 三天）
+利用DMA输出
+void JX_Audio_Init(void);
+void JX_Audio_DeInit(void);
+void JX_Audio_Play(int32_t idx);
+void JX_Audio_StopPaly(void);
+
+3.	Flash模块(jx_flash.h / jx_flash.c)（郝英杰, 三天）  40 * 3 * 2k
+uint32_t JX_Flash_GetSampleNumber(void); 40max
+uint32_t JX_Flash_GetSampleAddr(uint8_t user_index,uint8_t subnumber);   第几根手指  第几个样本
+void JX_Flash_SaveFingerSample(uint32_t uuid, uint32_t *data1,uint32_t *data2,uint32_t *data3)  特征码
+void JX_Flash_DeletAllSamples(void)
+
+Table: Sector 0, UUID1,UUID2,UUID3.....（sample number）（CRC8）
+ 特征码 (40个)     样本总数    特征码与样本总数的crc(写入样本数据并更新特征码之后校验) 
+
+4.	震动传感器模块(jx_shock.h / jx_shock.c) （郝英杰，五天）
+void JX_Shock_Init(void);
+void JX_Shock_DeInit(void);
+void JX_Shock_StartSensing(void);
+void JX_Shock_StopSensing(void);
+
+5.	RTC模块(jx_rtc.h / jx_rtc.c) （郝英杰，三天）
+void JX_RTC_Init(void);
+void JX_RTC_DeInit(void);
+void JX_RTC_GetTime(uint32_t *year, uint8_t *month, uint8_t *day, uint8_t *hour, uint8_t *min, uint8_t *sec);
+void JX_RTC_SetTime(uint32_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
+
+6.	智安宝UH0002模块(jx_uh0002.h / jx_uh0002.c) （郝英杰，三天）
+void JX_UH0002_Init(void);
+void JX_UH0002_DeInit(void);
+int32_t JX_UH0002_SendMessage(uint8_t *senddata);
+int32_t JX_UH0002_ReceiveMessage(uint8_t *receivedata);
+
+8.	TOUCH模块(jx_touch.h / jx_touch.c) （周林，deadline，）
+void JX_Touch_Init(void);
+void JX_Touch_Init(void);
+
+9.	CMOS模块(jx_camera.h / jx_camera.c) （周林，deadline，）
+void JX_Camera_Init(void);
+void JX_Camera_DeInit(void);
+void JX_Camera_CaptureImage(uint32_t imageDataAddr);
+
+10. 加密芯片 （郝英杰, 三天）
+void JX_DX8_Init(void);
+void JX_DX8_DeInit(void);
+int32_t JX_DX8_Authen(void);
+int32_t JX_DX8_SetROI(*ROI);
+int32_t JX_DX8_ReadROI(*ROI);
+
+11. F1-ADC读取电量 （郝英杰，五天）
+void JX_ADC_Init(void);
+void JX_ADC_DeInit(void);
+int32_t JX_ADC_GetPower(void);
+
+12. F1-Flash （郝英杰，五天）
+验证模式(正常模式：0,安全模式：1) int32_t JX_GetOpenDoorMode(void); voild JX_SetOpenDoorMode(int32_t);
+警戒模式(未开启：0，开启：1) int32_t JX_GetAlertMode(void); void JX_SetAlertMode(int32_t);
+管理密码（0-9，‘/0’结束符，密码最长8字节） int32_t JX_SetAdmPassword(void); void JX_CheckAdmPassword(int32_t);
+用户密码 int32_t JX_SetUserPassword(void); void JX_CheckUserPassword(int32_t);
+样本的UUID以及ID数量 void JX_SaveUUID(int32_t); int32 JX_CheckUUID(int32_t); int32 JX_DeletUUID(int32_t); 
+
+13. F1-微动开关 （郝英杰，五天）
+void JX_DoorState_Init(void);
+void JX_DoorState_DeInit(void);
+int32_t JX_GetDoorState(void);
+
+14. F1-电磁铁（郝英杰，五天）
+void JX_OpenDoor_Init(void);
+void JX_OpenDoor_DeInit(void);
+void JX_ExecuteOpenDoor(void);
+
+15. F1-中断（复位，优先级最高10；设置，优先级次之9；振动模块，优先级8）（郝英杰，五天）
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+H7-F1串口通信，F1为主，H7为从，H7要发送数据给F1之前先通过拉低一IO口告诉F1，F1再发消息给H7询问
+UART命令通信帧格式
+命令帧：帧头+指令码+参数1+参数2+长度L+长度H+校验和 （参数1包含安全模式还是正常模式状态，以及是否警戒状态；参数2表示电量）
+应答帧：帧头+指令码+参数1+参数2+长度L+长度H+校验和
+数据帧：帧头+数据+校验和
+
+H7-F1整体逻辑：
+1.按下复位键，F1发送复位命令给H7,等待H7回应，10s未回应则放弃复位，回应则执行内部复位。H7接收到复位命令后先执行复位操作，后回复给F1，告诉H7执行完复位了。F1接收到H7的回复后，开始执行复位，复位完成后，再回复给H7, 告诉H7自己完成了复位。H7从接收到F1的复位命令开始，显示一张图，表示正在执行复位，H7接收到F1复位完成的消息后，显示复位完成（显示2s）
+2. 按下设置键，F1发送设置命令给H7, H7进入到设置菜单界面，
+消息源
+1） 静脉识别成功，F1向H7请求UUID
+2） 开锁密码输入完成
+3） 管理员密码输入完成
+4） 设置管理员密码输入完成
+5） 设置用户密码输入完成
+6） 静脉注册完成
+7） 删除静脉完成
+8） 设置开门模式完成
+9） 安全模式下开锁密码输入完成，仅验证密码，不开箱
+10）安全模式下指静脉认证完成，同时验证密码和静脉，开箱
+11）请求休眠
+
+3.震动传感器检测到震动，输入到F1，F1检测是否处于警戒状态，如果是，则唤醒H7，让H7发出警戒（此时主界面为默认主界面，可以进行认证，认证正确，则解除警戒）。若未处于警戒状态，则不做任何操作。
+4. F1记录下开门的时间，直到门关闭后，F1才能休眠，若5分钟后还没关门，F1唤醒H7，报警，报警15s (1 H7发送未关门信号给智安宝；2 H7显示屏显示未关门；3 H7语言提示未关门)
+5. F1唤醒H7后，F1发消息给H7，把剩余电量传给H7, 参数码用于传剩余电量（参数码2）
+6. 按下Home键，H7显示屏开机动画，进入默认主界面（正常模式，认证选择界面；安全模式，开始认证界面）
