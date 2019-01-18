@@ -7,7 +7,7 @@ uint8_t shock_sensor_state = 0;
 void JX_Shock_Init(void)
 {
 	uint8_t i;
-	for(i=0; i<20; i++)
+	for(i=0; i<50; i++)
 	{
 		delay_ms(100);
 		if(key_Pressed)

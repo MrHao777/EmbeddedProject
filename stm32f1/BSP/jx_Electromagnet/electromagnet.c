@@ -23,15 +23,18 @@ void JX_OpenDoor_DeInit(void)
 
 void JX_ExecuteOpenDoor(void)
 {
-	uint8_t time_out=0;
-	
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
-	while(JX_GetDoorState() == 0 && time_out<200)
-	{
-		delay_ms(100);
-		time_out ++;
-	}
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+//	uint8_t time_out=0;
+//	
+//	if(JX_GetDoorState() == 1)//церя©╙
+//		return;
+//	else
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
+//	while(JX_GetDoorState() == 0 && time_out<200)
+//	{
+//		delay_ms(100);
+//		time_out ++;
+//	}
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
 }
 
 

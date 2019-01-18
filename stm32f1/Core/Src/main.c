@@ -47,6 +47,7 @@ int main(void)
 	delay_init(64);
 	uart_init(115200);
 	
+	delay_ms(100);//上电延时,等待唤醒脚状态稳定
 	JX_KeyInit();
   JX_Shock_Init();
 	JX_ADC_Init();
@@ -55,11 +56,10 @@ int main(void)
 	JX_OpenDoor_Init();
 	JX_FlashInit();
 	JX_PowerCtrlInit();
+	
 	JX_CommandStateMachine();
-	while(1)
-	{
-		
-	}
+	while(1);
+
 }
 
 void _Error_Handler(char *file, int line)

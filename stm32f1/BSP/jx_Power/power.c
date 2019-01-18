@@ -16,7 +16,7 @@ void JX_PowerCtrlInit(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	
 	JX_Time4Init();
-	JX_Timer4SetAlarm();
+//	JX_Timer4SetAlarm();
 }
 
 void JX_PowerCtrlDeInit(void)
@@ -32,6 +32,11 @@ void JX_PowerON(void)
 void JX_PowerOFF(void)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);	
+}
+
+uint8_t JX_GetPowerState(void)
+{
+	return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11);
 }
 
 void JX_EnterStandbyMode(void)

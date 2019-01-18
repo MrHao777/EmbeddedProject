@@ -117,6 +117,7 @@ void EXTI4_IRQHandler(void)
 	door_state = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4);
 	if(door_state)
 	{
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
 		JX_Timer3Stop();
 		JX_Timer3SetAlarm();
 	}

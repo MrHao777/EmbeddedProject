@@ -14,7 +14,7 @@ UserPassword : 8字节
 uuid数据     : ADDR_FLASH_PAGE_62 0x0800F800
 uuid         : 40*4字节
 *********************************************/
-#define FLASH_DATA_VALIED_FLAG  0x56781234                  /* 数据有效标志 */
+#define FLASH_DATA_VALIED_FLAG  0x12345678                 /* 数据有效标志 */
 #define FLASH_USER_START_ADDR   ADDR_FLASH_PAGE_61    			/* 用户数据首地址 */
 #define FLASH_SECTOR_SIZE_F1		0x400 											/* 每个page容量(字节) */
 #define FLASH_WAITETIME  				100000          						/* FLASH等待超时时间 */
@@ -33,6 +33,8 @@ void JX_FlashInit(void);
 uint32_t JX_GetOpenDoorMode(void); 
 //获取警戒模式状态
 uint32_t JX_GetAlertMode(void);
+//获取注册样本数
+uint32_t JX_GetUuidNumber(void);
 //匹配返回0 否则返回-1
 int32_t JX_CheckAdmPassword(uint8_t* password_pointer);
 //匹配返回0 否则返回-1

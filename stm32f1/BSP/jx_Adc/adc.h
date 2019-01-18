@@ -5,7 +5,7 @@
 
 //根据实际情况调节
 #define ADC_VALUE_MAX 4095
-#define ADC_VALUE_MIN 1032
+#define ADC_VALUE_MIN 2793
 
 void JX_ADC_Init(void);
 void JX_ADC_DeInit(void);

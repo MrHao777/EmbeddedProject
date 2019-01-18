@@ -27,10 +27,11 @@ uint8_t     UartNeedToRX=7;                  //接收期望字节数
 #define USART_TX_LEN 8                       //串口发送缓冲区大小
 static uint8_t USART_TX_BUF[USART_TX_LEN];   //数据发送缓冲
 static int8_t RecvState = 0;                 //数据接收状态
-static uint8_t temp1, temp2, i;              //临时变量
+static uint8_t temp1, temp2, temp3, i;       //临时变量
 static uint8_t temp_databuf[15];             //数据缓冲
 static uint8_t temppassword[6];              //临时密码
 static uint32_t tempuuid;                    //临时uuid
+static uint32_t loopflag;                    //循环变量
 
 void JX_CommandStateMachine(void)
 {
@@ -127,11 +128,12 @@ void JX_CommandStateMachine(void)
 			case state_RequestRst :    /*复位请求*/
 				JX_UartSendCmdFrame(state_RequestRst, 0, 0, 0, 0);
 			  RecvState = JX_UartRecvCmdFrame();
+			  USART_RX_STA = 0;   //两次接收要清除标志
+			  UartNeedToRX = 7;
 			  if(RecvState == -1)
 					state = state_Nop;
 				else
 				{
-					USART_RX_STA = 0;
 					if(USART_RX_BUF[3] == 0)  
 						state = state_H7RstFinish;
 					else
@@ -154,10 +156,18 @@ void JX_CommandStateMachine(void)
 				key_set_state = 0;
 				break;
 			case state_WeekUpH7:       /*唤醒请求*/
-				JX_PowerON();
-			  delay_ms(100);
+				if(JX_GetPowerState() == 1)
+				{
+					JX_PowerON();          //此处应删除
+					state = state_Nop;
+					break;
+				}
+				else
+				{
+					JX_PowerON();
+				}
 				temp1 = 0;
-				if(JX_GetAlertMode())
+				if(JX_GetAlertMode())  
 					temp1 |= 0x02;
 				else
 					temp1 &= 0xfd;
@@ -167,6 +177,7 @@ void JX_CommandStateMachine(void)
 					temp1 &= 0xfe;
 				temp2 = JX_ADC_GetPower();
 				temp2 = 20;
+				delay_ms(2000);
 				JX_UartSendCmdFrame(state_WeekUpH7, temp1, temp2, 0, 0);
 			  RecvState = JX_UartRecvCmdFrame();
 			  if(RecvState == -1)
@@ -181,6 +192,7 @@ void JX_CommandStateMachine(void)
 				key_set_state = 0; //
 				break;
 			case state_SendAlarmSig :  /*报警请求*/
+				JX_PowerON();				
 				if(JX_GetAlertMode())
 				{
 					temp1 = 0;
@@ -193,6 +205,7 @@ void JX_CommandStateMachine(void)
 					else
 						temp1 &= 0xfe;
 					temp2 = JX_ADC_GetPower();
+					delay_ms(2000);
 					JX_UartSendCmdFrame(state_WeekUpH7, temp1, temp2, 0, 0);
 					RecvState = JX_UartRecvCmdFrame();
 					if(RecvState == -1)
@@ -282,12 +295,13 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] + '0';
 					for(; i<6; i++)
 						temppassword[i] = 'x';
 					temp2 = JX_CheckUserPassword(temppassword);
-					if(temp2)
-						temp2 = 1;
+					temp3 = JX_CheckAdmPassword(temppassword);
+					if(temp2 == 0 || temp3 == 0)
+						temp2 = 0;
 					JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 				} else if(RecvState == -1)
 				{
@@ -302,6 +316,8 @@ void JX_CommandStateMachine(void)
 				}
 				delay_ms(10);
 				JX_UartSendCmdFrame(state_JudgeResult, state_JudgeUserPwd, temp2, 0, 0);
+				if(temp2 == 0)
+					JX_ExecuteOpenDoor();
 				RecvState = JX_UartRecvCmdFrame();
 				if(RecvState != -1)
 					if(USART_RX_BUF[3] == 1)
@@ -314,7 +330,7 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] + '0';
 					for(; i<6; i++)
 						temppassword[i] = 'x';
 					temp2 = JX_CheckAdmPassword(temppassword);
@@ -334,6 +350,8 @@ void JX_CommandStateMachine(void)
 				}
 				delay_ms(10);
 				JX_UartSendCmdFrame(state_JudgeResult, state_JudgeAdmiPwd, temp2, 0, 0);
+				if(temp2 == 0)
+					JX_ExecuteOpenDoor();
 				RecvState = JX_UartRecvCmdFrame();
 				if(RecvState != -1)
 					if(USART_RX_BUF[3] == 1)
@@ -346,7 +364,7 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] + '0';
 					for(; i<6; i++)
 						temppassword[i] = 'x';
 					JX_SetAdmPassword(temppassword); 
@@ -376,7 +394,7 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] + '0';
 					for(; i<6; i++)
 						temppassword[i] = 'x';
 					JX_SetUserPassword(temppassword); 
@@ -453,7 +471,10 @@ void JX_CommandStateMachine(void)
 						temppassword[i] = USART_RX_BUF[i+1];
 					for(; i<6; i++)
 						temppassword[i] = 0;
-					JX_SetOpenDoorMode(*(uint32_t*)temppassword);
+					if(JX_GetUuidNumber() == 0 && temppassword[0] == 1) //样本为0 bit0为1 不允许设置为1
+						JX_SetOpenDoorMode(0);
+					else
+						JX_SetOpenDoorMode(temppassword[0]);
 					JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 				} else if(RecvState == -1)
 				{
@@ -467,11 +488,15 @@ void JX_CommandStateMachine(void)
           break;					
 				}
 				delay_ms(10);
-				JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 0, 0, 0);
-				RecvState = JX_UartRecvCmdFrame();
-				if(RecvState != -1)
-					if(USART_RX_BUF[3] == 1)
-						JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 0, 0, 0);
+				//JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 0, 0, 0); //0正确  1错误 2未注册
+				if(JX_GetUuidNumber() == 0 && temppassword[0] == 1)
+					JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 2, 0, 0);
+				else
+					JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 0, 0, 0);
+//				RecvState = JX_UartRecvCmdFrame();
+//				if(RecvState != -1)
+//					if(USART_RX_BUF[3] == 1)
+//						JX_UartSendCmdFrame(state_JudgeResult, state_SetVerifMode, 0, 0, 0);
 				state = state_Nop;
 				break;
       case state_SetWarnMode :   /*设置警戒模式(0:未开启 1:开启)*/
@@ -510,12 +535,13 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] + '0';
 					for(; i<6; i++)
-						temppassword[i] = 0;
+						temppassword[i] = 'x';
 					temp2 = JX_CheckUserPassword(temppassword);
-					if(temp2)
-						temp2 = 1;
+					temp3 = JX_CheckAdmPassword(temppassword);
+					if(temp2 == 0 || temp3 == 0)
+						temp2 = 0;
 					JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 				} else if(RecvState == -1)
 				{
@@ -531,6 +557,8 @@ void JX_CommandStateMachine(void)
 				delay_ms(10);
 				JX_UartSendCmdFrame(state_JudgeResult, state_JPDO, temp2, 0, 0);
 				RecvState = JX_UartRecvCmdFrame();
+				if(temp2 == 0)
+					JX_ExecuteOpenDoor();
 				if(RecvState != -1)
 					if(USART_RX_BUF[3] == 1)
 						JX_UartSendCmdFrame(state_JudgeResult, state_JPDO, temp2, 0, 0);
@@ -542,7 +570,7 @@ void JX_CommandStateMachine(void)
 			  if(RecvState == 0)
 				{
 					for(i=0; i<temp1; i++)
-						temppassword[i] = USART_RX_BUF[i+1];
+						temppassword[i] = USART_RX_BUF[i+1] ;
 					for(; i<6; i++)
 						temppassword[i] = 0;
 					tempuuid = 0;                     //
@@ -577,27 +605,30 @@ void JX_CommandStateMachine(void)
       case state_H7RstFinish :   /*H7复位完成*/
 				for(i=0; i<5; i++)
 				{
+					USART_RX_STA = 0;
 					RecvState = JX_UartRecvCmdFrame();
 					if(RecvState == 0)
 					{
 						JX_UartSendCmdFrame(state_CrcResponse, 0, 0, 0, 0);
 						state = state_FinishRst;
+						break;
 					}
 					else if(RecvState == -2)
 					{
 						JX_UartSendCmdFrame(state_CrcResponse, 0, 1, 0, 0);
-						state = state_Nop;
+						state = state_H7RstFinish;
 					}
 					else
-						state = state_Nop;
+						state = state_H7RstFinish;
 				}
 				break;
       case state_H7RequestSleep :/*H7请求休眠*/
-				JX_UartSendCmdFrame(state_JudgeResult, state_H7RequestSleep, 1, 0, 0);
+				JX_UartSendCmdFrame(state_JudgeResult, state_H7RequestSleep, 0, 0, 0);
 			  RecvState = JX_UartRecvCmdFrame();
 			  if(RecvState == 0)
 				{
 					JX_PowerOFF();
+					JX_EnterStandbyMode();
 					state = state_Nop;
 				}
 				else if(RecvState == -1)
@@ -655,8 +686,7 @@ void JX_UartSendCmdFrame(uint8_t cmd, uint8_t data1, uint8_t data2, uint8_t leng
 int8_t JX_UartRecvCmdFrame(void)
 {
 	timer_alarm_state = 0;
-	JX_Timer4ClearCount();
-	JX_TimerSetAlarmTime(2);
+	JX_TimerSetAlarmTime(5);
 	while((USART_RX_STA & 0x8000) == 0)
 	{
 		if(timer_alarm_state)
@@ -665,6 +695,7 @@ int8_t JX_UartRecvCmdFrame(void)
 			return -1;
 		}
 	}
+	JX_TimerStop();
 	if(USART_RX_BUF[6] == JX_Usart_CRC8(USART_RX_BUF, 6))
 		return 0;
 	else
@@ -674,8 +705,8 @@ int8_t JX_UartRecvCmdFrame(void)
 int8_t JX_UartRecvDataFrame(void)
 {
 	uint8_t crc;
+	JX_TimerSetAlarmTime(60);
 	timer_alarm_state = 0;
-	JX_Timer4ClearCount();
 	while((USART_RX_STA & 0x8000) == 0)
 	{
 		if(timer_alarm_state)
@@ -685,6 +716,7 @@ int8_t JX_UartRecvDataFrame(void)
 			return -1;
 		}
 	}
+	JX_TimerStop();
 	crc = JX_Usart_CRC8(USART_RX_BUF+1, UartNeedToRX -2);
 	if(USART_RX_BUF[UartNeedToRX -1] == crc)
 	{
